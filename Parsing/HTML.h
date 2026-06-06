@@ -1,10 +1,10 @@
 #pragma once 
 #include <vector>
 
-#include "PointerList.h"
-#include "JSON.h"
-#include "KeyPointerPair.h"
-#include "Keyboard.h"
+#include "../Containers/PointerList.h"
+#include "../Containers/KeyPointerPair.h"
+#include "../Parsing/JSON.h"
+#include "../Window/Keyboard.h"
 
 enum HTMLElementType
 {

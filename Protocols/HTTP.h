@@ -1,8 +1,8 @@
 #pragma once 
 #include <Windows.h>
 
-#include "PointerList.h"
-#include "Strings.h"
+#include "../Containers/PointerList.h"
+#include "../Base/Strings.h"
 
 class Header
 {

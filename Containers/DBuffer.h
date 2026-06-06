@@ -2,8 +2,8 @@
 #include <Windows.h>
 #include <stdint.h>
 
-#include "MemoryManipulation.h"
-#include "Bytes.h"
+#include "../Base/MemoryManipulation.h"
+#include "../Base/Bytes.h"
 
 class DBuffer
 {

@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <DirectXMath.h>
 
-#include "PointerList.h"
-#include "DBuffer.h"
-#include "JSON.h"
-#include "Files.h"
-#include "RDBuffer.h"
+#include "../Containers/PointerList.h"
+#include "../Containers/DBuffer.h"
+#include "../Parsing/JSON.h"
+#include "../IO/Files.h"
+#include "../Containers/RDBuffer.h"
 
 namespace GLB
 {

@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "DBuffer.h"
-#include "Strings.h"
+#include "../Containers/DBuffer.h"
+#include "../Base/Strings.h"
 
 class Files
 {

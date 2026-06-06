@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <Windows.h>
 
-#include "DBuffer.h"
+#include "../Containers/DBuffer.h"
 #include "MemoryManipulation.h"
-#include "PointerList.h"
+#include "../Containers/PointerList.h"
 
 class Strings
 {

@@ -1,8 +1,8 @@
 #pragma once 
 #include <Windows.h>
 
-#include "Strings.h"
-#include "PointerList.h"
+#include "../Base/Strings.h"
+#include "../Containers/PointerList.h"
 
 class SMTPRequest
 {

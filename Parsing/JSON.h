@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "PointerList.h"
-#include "Strings.h"
+#include "../Containers/PointerList.h"
+#include "../Base/Strings.h"
 
 enum JSONElementType
 {

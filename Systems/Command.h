@@ -1,9 +1,9 @@
 #pragma once 
 #include <Windows.h>
 
-#include "PointerList.h"
-#include "Bytes.h"
-#include "IntegerList.h"
+#include "../Containers/PointerList.h"
+#include "../Base/Bytes.h"
+#include "../Containers/IntegerList.h"
 
 class CommandFlag
 {

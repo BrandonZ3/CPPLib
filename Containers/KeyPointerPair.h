@@ -1,7 +1,7 @@
 #pragma once 
 
 #include "PointerList.h"
-#include "Strings.h"
+#include "../Base/Strings.h"
 
 class KeyPointerPair
 {
