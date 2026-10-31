@@ -13,6 +13,7 @@ class Keyboard
 {
 	UINT keyCount = 200;
 	KeyboardKey keys[200];
+	int lastKeySet = -1;
 
 public:
 	bool IsSet(int key);
@@ -25,4 +26,9 @@ public:
 
 	static unsigned char TranslateKeyboardToHTMLTextChar(unsigned char value);
 	static unsigned char TranslateHTMLTextCharToKeyboard(unsigned char value);
+
+	void ClearLastKeySet();
+	int GetLastKeySet();
+
+	static char* TranslateVKCodeToText(UINT VKCode);
 };

@@ -1,4 +1,5 @@
-#include "Keyboard.h"  
+#include "Keyboard.h"
+#include "../Base/Strings.h"
 
 
 bool Keyboard::IsSet(int key)
@@ -28,6 +29,7 @@ DBuffer* Keyboard::GetSetKeys()
 
 void Keyboard::SetKey(int key)
 {
+	lastKeySet = key;
 	for (int i = 0; i < this->keyCount; i++)
 	{
 		if (this->keys[i].key == key)
@@ -150,4 +152,39 @@ unsigned char Keyboard::TranslateHTMLTextCharToKeyboard(unsigned char value)
 	{
 		return (value + 0x7B) - offsetsp3;
 	}
+}
+
+void Keyboard::ClearLastKeySet()
+{
+	lastKeySet = -1;
+}
+
+int Keyboard::GetLastKeySet()
+{
+	return lastKeySet;
+}
+
+char* Keyboard::TranslateVKCodeToText(UINT VKCode)
+{
+	UINT scanCode = MapVirtualKeyA(VKCode, 0);
+
+	LONG lParam = scanCode << 16;
+
+	switch (VKCode)
+	{
+	case VK_INSERT: case VK_DELETE: case VK_HOME: case VK_END:
+	case VK_PRIOR:  case VK_NEXT:   case VK_LEFT: case VK_UP:
+	case VK_RIGHT:  case VK_DOWN:   case VK_DIVIDE: case VK_RMENU:
+	case VK_RCONTROL:
+		lParam |= 0x01000000;
+		break;
+	}
+
+	char name[100] = {};
+
+	int result = GetKeyNameTextA(lParam, name, 100);
+
+	if (result > 0)
+		return Strings::Clone(name);
+	return Strings::Clone("Unknown");
 }
