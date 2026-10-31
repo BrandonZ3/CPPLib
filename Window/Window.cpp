@@ -69,6 +69,18 @@ LRESULT CALLBACK Window::StdWindowProcedure(HWND hwnd, UINT msg, WPARAM wParam, 
 		}
 		break;
 	}
+	case(WM_SETCURSOR):
+	{
+		if (LOWORD(lParam) == HTCLIENT)
+		{
+			if (window->centerMouse)
+			{
+				ShowCursor(FALSE);
+			}
+			return 1;
+		}
+		break;
+	}
 	case(WM_INPUT):
 	{
 		UINT dwSize;
@@ -201,6 +213,7 @@ void Window::Init(HINSTANCE hinst, int width, int height, WNDPROC wndProc, void 
 	{
 		this->controls = (HWND*)malloc(sizeof(HWND*) * 200);
 		ShowWindow(this->handle, SW_SHOW);
+		UpdateWindow(this->handle);
 		this->allowrunning = true;
 		this->callback = runcallback;
 	}
