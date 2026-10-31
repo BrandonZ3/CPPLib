@@ -320,6 +320,46 @@ char* Strings::UintToString(uint64_t value)
 	return out;
 }
 
+char* Strings::IntToString(int64_t value)
+{
+	char* out;
+	char values[100];
+
+	for (int i = 0; i < 100; i++)
+	{
+		values[i] = 0;
+	}
+
+	int i = 0;
+
+	if (value != 0)
+	{
+		while (value != 0)
+		{
+			uint8_t mod = value % 10;
+			values[i] = mod + 0x30;
+			value /= 10;
+			i++;
+		}
+
+		out = (char*)MemoryManipulation::MemoryAllocate(i + 1);
+		out[i] = 0;
+
+		for (int x = (i - 1); x > -1; x--)
+		{
+			out[(i - 1) - x] = values[x];
+		}
+	}
+	else
+	{
+		out = (char*)MemoryManipulation::MemoryAllocate(2);
+		out[0] = 0x30;
+		out[1] = 0x0;
+	}
+
+	return out;
+}
+
 char* Strings::UintToHex(uint64_t value)
 {
 	char* out;
@@ -787,32 +827,44 @@ char* Strings::CreateIndent(int depth)
 	return tabbed;
 }
 
-
 char* Strings::FloatToString(float value)
 {
 	DBuffer* buf = new DBuffer();
 
-	uint32_t exponent = (*((uint32_t*)&value) & 0x7F800000) >> 23;
-	bool sign = (*((uint32_t*)&value) & 0x80000000) == 1;
-	uint32_t mantissa = 0;
+	bool sign = false;
 
-	if (exponent >= 127)
-		mantissa = ((*((uint32_t*)&value) & 0x007FFFFF) | 0x00800000) << (exponent - 127);
+	uint32_t* trickster = (uint32_t*)(&value);
+
+	sign = ((*trickster) >> 31) & 1;
+
+	*trickster &= 0x7FFFFFFF;
+
+	uint32_t flattened = value;
+	uint32_t decimals = (value - flattened) * 1000;
+	
+	if (sign)
+		buf->Add('-');
+
+	if (flattened == 0)
+		buf->Add(0x30);
 	else
-		mantissa = ((*((uint32_t*)&value) & 0x007FFFFF) | 0x00800000) >> (127 - exponent);
+		buf->WriteUIntegerAsStringToDBuffer(flattened);
 
-	bool firstValue = false;
-	while (mantissa != 0)
-	{
-		unsigned char window = (mantissa >> 23 & 0xFF);
-		uint32_t value = window % 10;
-		buf->Add(value);
-		mantissa *= 10;
-	}
+	buf->Add('.');
+	
+	if (decimals == 0)
+		buf->Add(0x30);
+	else
+		buf->WriteUIntegerAsStringToDBuffer(decimals);
 
-	int z = 0;
+
+	buf->Add((uint8_t)0);
+	char* output = (char*)buf->BufferOut(0, buf->count);
+
+	buf->Clear();
 	delete buf;
-	return NULL;
+
+	return output;
 }
 
 static float StringToFloat(char*)

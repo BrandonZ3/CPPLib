@@ -37,6 +37,8 @@ public:
 
 	static char* UintToString(uint64_t value);
 
+	static char* IntToString(int64_t value);
+
 	static char* UintToHex(uint64_t value);
 
 	static uint64_t StringToUint(const char* string);
