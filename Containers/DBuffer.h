@@ -25,7 +25,11 @@ public:
 
 	void Add(DBuffer* buffer);
 
+	void AddSpace(uint8_t initialValue, uint64_t byteLength);
+
 	unsigned char* BufferOut(uint64_t startIndex, uint64_t byteLength);
+
+	bool Set(uint8_t value, uint64_t offset);
 
 	void Clear();
 
@@ -42,4 +46,12 @@ public:
 	void Remove(uint64_t startIndex, uint64_t byteLength);
 
 	DBuffer* Slice(uint64_t startIndex, uint64_t byteLength);
+
+	void WriteUIntegerAsStringToDBuffer(uint64_t value);
+
+	uint64_t WriteUIntegerAsStringToDBuffer(uint64_t value, uint64_t offset);
+
+	void WriteFloatAsStringToDBuffer(float value);
+
+	uint64_t WriteFloatAsStringToDBuffer(float value, uint64_t offset);
 };

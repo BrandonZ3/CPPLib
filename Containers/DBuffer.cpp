@@ -99,6 +99,33 @@ void DBuffer::Add(DBuffer* buffer)
 	}
 }
 
+void DBuffer::AddSpace(uint8_t initialValue, uint64_t byteLength)
+{
+	if (this->count + byteLength < this->size)
+	{
+		for (uint64_t i = 0; i < byteLength; i++)
+		{
+			this->_buffer[this->count + i] = initialValue;
+		}
+		this->count += byteLength;
+	}
+	else
+	{
+		unsigned char* newbuffer = (unsigned char*)realloc(this->_buffer, (this->size * 2) + byteLength);
+		if (newbuffer != NULL)
+		{
+			this->_buffer = newbuffer;
+			this->size = (this->size * 2) + byteLength;
+
+			for (uint64_t i = 0; i < byteLength; i++)
+			{
+				this->_buffer[this->count + i] = initialValue;
+			}
+			this->count += byteLength;
+		}
+	}
+}
+
 unsigned char* DBuffer::BufferOut(uint64_t startIndex, uint64_t byteLength)
 {
 	unsigned char* returnbuffer = NULL;
@@ -112,6 +139,16 @@ unsigned char* DBuffer::BufferOut(uint64_t startIndex, uint64_t byteLength)
 		}
 	}
 	return returnbuffer;
+}
+
+bool DBuffer::Set(uint8_t value, uint64_t offset)
+{
+	if (offset < count)
+	{
+		this->_buffer[offset] = value;
+		return true;
+	}
+	return false;
 }
 
 void DBuffer::Clear()
@@ -221,4 +258,114 @@ DBuffer* DBuffer::Slice(uint64_t startIndex, uint64_t byteLength)
 		}
 	}
 	return returnbuffer;
+}
+
+void DBuffer::WriteUIntegerAsStringToDBuffer(uint64_t value)
+{
+	uint8_t chars[100];
+
+	int8_t i = 0;
+
+	while (value != 0)
+	{
+		uint8_t current = value % 10;
+		value /= 10;
+		chars[i] = current + 0x30;
+		i++;
+	}
+	i--;
+	for (; i >= 0; i--)
+		this->Add(chars[i]);
+}
+
+uint64_t DBuffer::WriteUIntegerAsStringToDBuffer(uint64_t value, uint64_t offset)
+{
+	uint8_t chars[100];
+
+	int8_t i = 0;
+
+	while (value != 0)
+	{
+		uint8_t current = value % 10;
+		value /= 10;
+		chars[i] = current + 0x30;
+		i++;
+	}
+	i--;
+	for (; i >= 0; i--)
+	{
+		this->Set(chars[i], offset);
+		offset++;
+	}
+	return offset;
+}
+
+void DBuffer::WriteFloatAsStringToDBuffer(float value)
+{
+	bool sign = false;
+
+	uint32_t* trickster = (uint32_t*)(&value);
+
+	sign = ((*trickster) >> 31) & 1;
+
+	*trickster &= 0x7FFFFFFF;
+
+	uint32_t flattened = value;
+	uint32_t decimals = (value - flattened) * 1000;
+
+	if (sign)
+		this->Add('-');
+
+	if (flattened == 0)
+		this->Add(0x30);
+	else
+		this->WriteUIntegerAsStringToDBuffer(flattened);
+
+	this->Add('.');
+
+	if (decimals == 0)
+		this->Add(0x30);
+	else
+		this->WriteUIntegerAsStringToDBuffer(decimals);
+}
+
+uint64_t DBuffer::WriteFloatAsStringToDBuffer(float value, uint64_t offset)
+{
+	bool sign = false;
+
+	uint32_t* trickster = (uint32_t*)(&value);
+
+	sign = ((*trickster) >> 31) & 1;
+
+	*trickster &= 0x7FFFFFFF;
+
+	uint32_t flattened = value;
+	uint32_t decimals = (value - flattened) * 1000;
+
+	if (sign)
+	{
+		this->Set('-', offset);
+		offset += 1;
+	}
+
+	if (flattened == 0)
+	{
+		this->Set(0x30, offset);
+		offset += 1;
+	}
+	else
+		offset = this->WriteUIntegerAsStringToDBuffer(flattened, offset);
+
+	this->Set('.', offset);
+	offset += 1;
+
+	if (decimals == 0)
+	{
+		this->Set(0x30, offset);
+		offset += 1;
+	}
+	else
+		offset = this->WriteUIntegerAsStringToDBuffer(decimals, offset);
+
+	return offset;
 }
