@@ -21,15 +21,15 @@ public:
 
         fopen_s(&file, filepath, readmode);
 
-        if (file)
+        if (file != NULL)
         {
             size_t fsize = GetFileSize(file);
 
             if (limit > fsize)
                 ReadFile(file, output);
-        }
 
-        fclose(file);
+            fclose(file);
+        }
 
         return output;
     }
