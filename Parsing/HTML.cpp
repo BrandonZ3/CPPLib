@@ -2595,8 +2595,9 @@ void HTMLElement::HTMLHandleTextCharacters(HTMLElement* element, JSONElement* va
 		{
 			int length = Strings::Length(value);
 
-			if (element->characters.size() == 0)
+			if (element->characters.size() == 0 || length != element->characters.size())
 			{
+				element->characters.clear();
 				for (int i = 0; i < length; i++)
 				{
 					HTMLTextCharacter c;
@@ -2843,6 +2844,8 @@ void HTMLElement::HTMLInvalidateAll(HTMLElement* element)
 	element->textDirty = true;
 	element->scrollBarScaleXDirty = true;
 	element->scrollBarScaleYDirty = true;
+	
+	element->characters.clear();
 
 	for (int i = 0; i < element->children.size(); i++)
 		HTMLInvalidateAll(element->children.at(i));
@@ -4540,6 +4543,12 @@ void HTMLParser::ResolveDynamicHTML(HTMLElement* element, JSONElement* variables
 							{
 								free(trackValue);
 								free(genIndex);
+
+								//NeedToReplaceAnyTextAndStyling
+								HTMLElement* child = HTMLParser::RecursiveGenerate(element->generators.at(0), NULL, tempVars, variables);
+								HTMLParser::HTMLReplaceStyleAndText(child, element->children.at(i));
+								//child->CopyFlatDetailsToElement(element->children.at(i));
+								delete child;
 							}
 							else
 							{
@@ -4618,6 +4627,34 @@ void HTMLParser::ResolveDynamicHTML(HTMLElement* element, JSONElement* variables
 	for (int i = 0; i < element->children.size(); i++)
 	{
 		ResolveDynamicHTML(element->children.at(i), variables, components);
+	}
+}
+
+//This might have to do more than styling and text
+void HTMLParser::HTMLReplaceStyleAndText(HTMLElement* reference, HTMLElement* output)
+{
+	uint64_t sizeref = reference->children.size();
+	if (sizeref == output->children.size())
+	{
+		for (int i = 0; i < sizeref; i++)
+		{
+			HTMLParser::HTMLReplaceStyleAndText(reference->children.at(i), output->children.at(i));
+		}
+	}
+
+	KeyPointerPair* styling = KeyPointerPair::GetKeyValuePointer(reference->attributes, "style");
+
+	//if(styling != NULL)
+		//HTMLParser::ParseStyling((const char*)styling->pointer, output);
+
+	if (reference->text != NULL)
+	{
+		if (output->text != NULL)
+		{
+			free(output->text);
+		}
+
+		output->text = Strings::Clone(reference->text);
 	}
 }
 

@@ -309,6 +309,7 @@ public:
 	static void ParseStyling(const char* style, HTMLElement* element);
 	static void ResolveHTML(HTMLElement* element, JSONElement* variables);
 	static void ResolveDynamicHTML(HTMLElement* element, JSONElement* variables, PointerList* components);
+	static void HTMLReplaceStyleAndText(HTMLElement* reference, HTMLElement* output);
 	static HTMLElement* RecursiveGenerate(HTMLElement* ref, HTMLElement* parent, JSONElement* tempVariables, JSONElement* variables);
 	static HTMLElement* RecreateElement(HTMLElement* ref, HTMLElement* parent);
 	//Components Function
