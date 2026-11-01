@@ -641,8 +641,294 @@ char* JSON::ResolveValue(const char* json, const char* variableName)
 	return result;
 }
 
+static int LastIndexOf(const char* string, char character)
+{
+	uint64_t size = Strings::Length(string);
+
+	for (int i = size - 1; i >= 0; i--)
+	{
+		if (string[i] == character)
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+
+#define ResetValueStepForFolowing() \
+cIndex = LastIndexOf((char*)currentName.DataPointer(0), '.'); \
+cIndex == -1 ? cIndex = 0:cIndex += 1; \
+currentName.Set(0, cIndex); \
+currentValue.Clear(); \
+inValue = false; \
+ \
+if(cIndex > 0 && currentName.DataPointer(cIndex-1)[0] == '.') \
+{ \
+	const char* toClone = (char*)currentName.DataPointer(0); \
+	char* modded = Strings::Clone((char*)toClone); \
+	modded[cIndex - 1] = '\0'; \
+	currentElement = JSONElement::GetElement(modded, base, false); \
+	free(modded); \
+} \
+else \
+{ \
+	currentElement = JSONElement::GetElement((char*)currentName.DataPointer(0), base, false); \
+} \
+ \
+if (currentElement == NULL) \
+{ \
+	currentType = NONE; \
+} \
+else \
+{ \
+	currentType = currentElement->type; \
+	switch(currentType) \
+	{ \
+		case(ARRAY): \
+		{ \
+			arrIndex = currentElement->children->count; \
+			break; \
+		} \
+	} \
+}
+
+#define SetElementBeforeReset(asd) \
+currentValue.Add((uint8_t)0); \
+currentElement->value = Strings::Clone((char*)currentValue.DataPointer(0)); \
+ResetValueStepForFolowing() 
+
+//THIS FUNCTION IS NOT FULLY TESTED. AND IT DID CRASH ON A HUGE JSON FILE, SO SOME DEBUGGING NEEDED. BUT I THINK ITS AS FAR AS I NEED IT TO BE FOR NOW
 JSONElement* JSON::CreateJSONElementTree(const char* json)
 {
-	//Implement me pls
-	return NULL;
+	JSONElement* base = new JSONElement();
+	base->type = JSONElementType::OBJECT;
+
+	uint64_t size = Strings::Length(json);
+
+	bool inMainObject = false;
+	DBuffer currentName;
+	DBuffer currentValue;
+	currentName.AddSpace(0, 1000);
+	uint64_t cIndex = 0;
+
+	uint64_t arrIndex = 0;
+
+	bool inKey = false;
+	bool inValue = false;
+	JSONElementType currentType = NONE;
+	JSONElement* currentElement = NULL;
+	bool isNumber = false;
+	bool isBoolean = false;
+	bool lastCleared = false;
+
+	for (int i = 0; i < size; i++)
+	{
+		if (!inMainObject)
+		{
+			if (json[i] == '{')
+			{
+				inMainObject = true;
+			}
+		}
+		else
+		{
+			if (!inKey && !inValue && currentType != ARRAY && json[i] == '"')
+			{
+				inKey = true;
+				continue;
+			}
+
+			if (inKey && ((json[i] != '\"' && json[i] != '\'') || (json[i - 1] == '\\' && (json[i] == '\"' || json[i] == '\''))))
+			{
+				currentName.Set(json[i], cIndex);
+				cIndex += 1;
+			}
+
+			if (inKey && (json[i] == '\"' || json[i] == '\'') && json[i - 1] != '\\')
+			{
+				if (Strings::Contains((char*)currentName.DataPointer(0), "passkeys.0.transports"))
+				{
+					int z = 0;
+				}
+				inKey = false;
+			}
+
+			if (!inKey && !inValue && json[i] == ':')
+			{
+				inValue = true;
+				currentType = NONE;
+			}
+
+			if (inValue == false && currentType == ARRAY && ((json[i] == '"' || json[i] == '\'') || json[i] == '[' || json[i] == '{' || (json[i] >= 0x30 && json[i] <= 0x39)))
+			{
+				arrIndex = currentElement->children->count;
+				char* indexString = Strings::UintToString(arrIndex);
+				uint64_t indexSC = Strings::Length(indexString);
+				
+				for (int i = 0; i < indexSC; i++)
+				{
+					currentName.Set(indexString[i], cIndex + i);
+				}
+
+				cIndex += indexSC;
+				currentName.Set('\0', cIndex);
+
+				free(indexString);
+				inValue = true;
+				currentType = NONE;
+			}
+
+			if (inValue && currentType == NONE)
+			{
+				if (json[i] == '"' || json[i] == '\'')
+				{
+					lastCleared = false;
+					currentType = KVP;
+				}
+
+				if (json[i] == '[')
+				{
+					lastCleared = true;
+					currentType = ARRAY;
+					arrIndex = 0;
+					inValue = false;
+				}
+
+				if (json[i] == '{')
+				{
+					lastCleared = true;
+					currentType = OBJECT;
+					inValue = false;
+				}
+
+				if (json[i] == '-' || (json[i] >= 0x30 && json[i] <= 0x39))
+				{
+					lastCleared = false;
+					currentType = KVP;
+					isNumber = true;
+				}
+
+				if ((json[i] == 't' && json[i+1] == 'r'&& json[i+2] == 'u'&& json[i+3] == 'e') || (json[i] == 'f' && json[i+1] == 'a' && json[i+2] == 'l' && json[i+3] == 's' && json[i+4] == 'e'))
+				{
+					lastCleared = false;
+					currentType = KVP;
+					isBoolean = true;
+				}
+
+				if (currentType != NONE)
+				{
+					currentName.Set(0, cIndex);
+					currentElement = base->GetElement((char*)currentName.DataPointer(0), base, true);
+					currentElement->type = currentType;
+					if (currentType == KVP && (json[i] == '"' || json[i] == '\''))
+						continue;
+					if (currentType == OBJECT || currentType == ARRAY)
+					{
+						currentName.Set('.', cIndex);
+						cIndex += 1;
+						currentName.Set('\0', cIndex);
+					}
+				}
+			}
+
+			if (inValue && currentType == KVP && isBoolean && json[i] != ',' && json[i] != ' ' && json[i] != '\r' && json[i] != '\n' && json[i] != '}')
+			{
+				currentValue.Add((uint8_t)json[i]);
+			}
+
+			if (inValue && currentType == KVP && isBoolean && json[i] == ',') // What if there is no Comma? ********************
+			{
+				SetElementBeforeReset()
+				isBoolean = false;
+				lastCleared = true;
+			}
+
+			if (inValue && currentType == KVP && isNumber && (json[i] == '-' || (json[i] <= 0x39 && json[i] >= 0x30) || json[i] == 'E' || json[i] == '.'))
+			{
+				currentValue.Add((uint8_t)json[i]);
+			}
+
+			if (inValue && currentType == KVP && isNumber && json[i] == ',') // What if there is no Comma? ********************
+			{
+				SetElementBeforeReset()
+				lastCleared = true;
+				isNumber = false;
+			}
+
+			if (inValue && currentType == KVP && !isBoolean && !isNumber && ((json[i] != '\"' && json[i] != '\'') || (json[i - 1] == '\\' && (json[i] == '\"' || json[i] == '\''))))
+			{
+				currentValue.Add((uint8_t)json[i]);
+			}
+
+			if (inValue && currentType == KVP && !isBoolean && !isNumber && (json[i] == '\"' || json[i] == '\'') && json[i - 1] != '\\')
+			{
+				SetElementBeforeReset()
+				lastCleared = true;
+			}
+
+			if (!inKey && inValue && currentType == KVP && (isBoolean || isNumber) && json[i] == '}')
+			{
+				SetElementBeforeReset()
+				lastCleared = true;
+
+				isBoolean = false;
+				isNumber = false;
+
+				i--;
+				continue;
+			}
+
+			if (!inKey && inValue && currentType == KVP && (isBoolean || isNumber) && json[i] == ']')
+			{
+				SetElementBeforeReset()
+				lastCleared = true;
+
+				isBoolean = false;
+				isNumber = false;
+
+				i--;
+				continue;
+			}
+
+			if (!inValue && currentType == OBJECT && json[i] == '}')
+			{
+				if (!lastCleared)
+				{
+					SetElementBeforeReset()
+				}
+
+				char lastChar = currentName.DataPointer(cIndex - 1)[0];
+				if (lastChar == '.')
+				{
+					cIndex -= 1;
+					currentName.Set(0, cIndex);
+				}
+				ResetValueStepForFolowing()
+			}
+
+			if (!inValue && currentType == ARRAY && json[i] == '{')
+			{
+
+			}
+
+			if (!inValue && currentType == ARRAY && json[i] == ']')
+			{
+				if (!lastCleared)
+				{
+					SetElementBeforeReset()
+				}
+
+				char lastChar = currentName.DataPointer(cIndex - 1)[0];
+				if (lastChar == '.')
+				{
+					cIndex -= 1;
+					currentName.Set(0, cIndex);
+				}
+				ResetValueStepForFolowing()
+			}
+		}
+	}
+
+	return base;
 }

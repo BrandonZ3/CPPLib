@@ -1,5 +1,7 @@
 #include "Strings.h"  
 
+#include <math.h>
+
 uint64_t Strings::Length(const char* string)
 {
 	uint64_t i = 0;
@@ -867,7 +869,52 @@ char* Strings::FloatToString(float value)
 	return output;
 }
 
-static float StringToFloat(char*)
+//NOT READY FOR ALL FLOAT FORMATS.
+float Strings::StringToFloat(const char* string)
 {
+	float value = 0;
+	char* current = Strings::Clone(string);
+	Strings::FreeAndAssign(&current, Strings::Trim(current));
 
+	uint32_t signV = 0;
+	bool sign = string[0] == '-';
+
+	if (sign)
+	{
+		Strings::FreeAndAssign(&current, Strings::Substring(current, 1, Strings::Length(current) - 1));
+		signV = 1 << 31;
+	}
+
+	int64_t hasDot = Strings::IndexOf(current, ".", 1);
+
+	if (hasDot != -1)
+	{
+		PointerList* sections = PointerList::SplitString(current, ".");
+
+		if (sections->count == 2)
+		{
+			uint64_t first = Strings::StringToUint((char*)sections->items[0]);
+			value = first;
+			uint64_t decimals = Strings::StringToUint((char*)sections->items[1]);
+			uint64_t dC = Strings::Length((char*)sections->items[1]);
+			float littlebits = decimals;
+			littlebits /= pow(10, dC);
+			value += littlebits;
+		}
+
+		sections->FreeEverything();
+		delete sections;
+	}
+	else
+	{
+		uint64_t first = Strings::StringToUint(current);
+		value = first;
+	}
+
+
+	uint32_t* trickster = (uint32_t*)(&value);
+
+	*trickster |= signV;
+
+	return value;
 }

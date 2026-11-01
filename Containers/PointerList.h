@@ -16,6 +16,7 @@ public:
 	uint64_t count;
 	PointerList(PointerList&&) = delete;
 	PointerList();
+	PointerList(int initialSize);
 
 	bool AddPointer(void* ItemAddress);
 

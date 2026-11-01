@@ -19,6 +19,13 @@ PointerList::PointerList()
 	this->items = (void**)MemoryManipulation::MemoryAllocate(this->size);
 }
 
+PointerList::PointerList(int initialPointerCap)
+{
+	this->count = 0;
+	this->size = (sizeof(void*) * initialPointerCap);
+	this->items = (void**)MemoryManipulation::MemoryAllocate(this->size);
+}
+
 bool PointerList::AddPointer(void* ItemAddress)
 {
 	if (((this->count + 1) * sizeof(void*) >= this->size))

@@ -73,5 +73,5 @@ public:
 
 	static char* FloatToString(float value);
 
-	static float StringToFloat(char*);
+	static float StringToFloat(const char* string);
 };
