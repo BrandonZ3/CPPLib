@@ -3360,6 +3360,7 @@ HTMLElement* HTMLParser::Parse(const char* document)
 
 			current->attributes->AddPointer(new KeyPointerPair(currentAttribute, currentAttributeValue));
 
+
 			if (Strings::CompareCaseInsensitive(currentAttribute, "style"))
 			{
 				ParseStyling(currentAttributeValue, current);
@@ -4409,7 +4410,43 @@ void HTMLParser::ResolveDynamicHTML(HTMLElement* element, JSONElement* variables
 
 		if (Strings::Contains(condition, "=="))
 		{
+			PointerList* conditionSpl = PointerList::SplitString((const char*)condition, "==");
 
+			char* clean1 = Strings::Trim((const char*)conditionSpl->items[0]);
+			char* clean2 = Strings::Trim((const char*)conditionSpl->items[1]);
+
+			if (conditionSpl->count == 2)
+			{
+				JSONElement* element1 = JSONElement::GetElement(clean1, variables, false);
+				JSONElement* element2 = JSONElement::GetElement(clean2, variables, false);
+
+				if (element1 != NULL && element2 != NULL)
+				{
+					result = Strings::Compare(element1->value, element2->value);
+				}
+				else if (element1 != NULL)
+				{
+					result = Strings::Compare(element1->value, clean2);
+
+					if (!result)//Ill do this later, when i need it
+					{
+						if (Strings::IsNumeric(clean2) && Strings::IsNumeric(element1->value))
+						{
+
+						}
+					}
+
+					if (!result)//Ill do this later, when i need it | this is for bool checks.
+					{
+
+					}
+				}
+			}
+
+			free(clean1);
+			free(clean2);
+			conditionSpl->FreeEverything();
+			delete conditionSpl;
 		}
 		else if (Strings::Contains(condition, "<="))
 		{
