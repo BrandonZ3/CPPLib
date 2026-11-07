@@ -842,7 +842,7 @@ char* Strings::FloatToString(float value)
 	*trickster &= 0x7FFFFFFF;
 
 	uint32_t flattened = value;
-	uint32_t decimals = (value - flattened) * 1000;
+	uint32_t decimals = (value - flattened) * 1000000000;
 	
 	if (sign)
 		buf->Add('-');
@@ -854,11 +854,24 @@ char* Strings::FloatToString(float value)
 
 	buf->Add('.');
 	
+	uint64_t count = buf->count;
+
 	if (decimals == 0)
 		buf->Add(0x30);
 	else
 		buf->WriteUIntegerAsStringToDBuffer(decimals);
 
+	uint64_t newCount = buf->count;
+
+	uint64_t diff = newCount - count;
+
+	uint64_t dec = 9;
+
+	uint64_t shift = dec - diff;
+	for (int i = 0; i < shift; i++)
+	{
+		buf->Insert(buf->count - diff, '0');
+	}
 
 	buf->Add((uint8_t)0);
 	char* output = (char*)buf->BufferOut(0, buf->count);

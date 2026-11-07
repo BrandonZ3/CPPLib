@@ -1052,17 +1052,53 @@ void HTMLElement::HTMLCalculateSizesAndPositionsTD(HTMLElement* element)
 					HTMLElement* rel = HTMLElement::GetPositionReferableParent(current);
 					if (current->topSet)
 					{
-						y = rel->y + rel->bTt + current->top;
-						shift = current->mt;
+						switch (current->topScaling)
+						{
+						case PX:
+						{
+							y = rel->y + rel->bTt + current->top;
+							shift = current->mt;
+							break;
+						}
+						case PERCENTAGE:
+						{
+							if (rel->dirtyHeight)
+								unresolved = true;
+							else
+							{
+								y = rel->y + rel->bTt + (current->top / 100.0f) * rel->actualHeight;
+								shift = current->mt;
+							}
+							break;
+						}
+						}
 					}
 					else if (current->bottomSet)
 					{
-						if (rel->dirtyHeight) 
-							unresolved = true;
-						else
+						switch (current->bottomScaling)
 						{
-							y = rel->y + rel->actualHeight - (current->bottom + current->actualHeight + rel->bTb);
-							shift = -current->mb;
+						case PX:
+						{
+							if (rel->dirtyHeight)
+								unresolved = true;
+							else
+							{
+								y = rel->y + rel->actualHeight - (current->bottom + current->actualHeight + rel->bTb);
+								shift = -current->mb;
+							}
+							break;
+						}
+						case PERCENTAGE:
+						{
+							if (rel->dirtyHeight)
+								unresolved = true;
+							else
+							{
+								y = rel->y + rel->actualHeight - (((current->bottom / 100.0f) * rel->actualHeight) + current->actualHeight + rel->bTb);
+								shift = -current->mb;
+							}
+							break;
+						}
 						}
 					}
 				}
@@ -1259,17 +1295,54 @@ void HTMLElement::HTMLCalculateSizesAndPositionsTD(HTMLElement* element)
 					float shift = 0;
 					if (current->leftSet)
 					{
-						x = rel->x + rel->bTl + current->left;
-						shift = current->ml;
+						switch (current->leftScaling)
+						{
+						case PX:
+						{
+							x = rel->x + rel->bTl + current->left;
+							shift = current->ml;
+							break;
+						}
+						case PERCENTAGE:
+						{
+							if (rel->dirtyWidth)
+								unresolved = true;
+							else
+							{
+								x = rel->x + rel->bTl + (current->left / 100.0f) * rel->actualWidth;
+								shift = current->ml;
+							}
+							break;
+						}
+						}
 					}
 					else if (current->rightSet)
 					{
-						if (rel->dirtyWidth) 
-							unresolved = true;
-						else
+
+						switch (current->rightScaling)
 						{
-							x = rel->x + rel->actualWidth - (current->right + current->actualWidth + rel->bTr);
-							shift = -current->mr;
+						case PX:
+						{
+							if (rel->dirtyWidth)
+								unresolved = true;
+							else
+							{
+								x = rel->x + rel->actualWidth - (current->right + current->actualWidth + rel->bTr);
+								shift = -current->mr;
+							}
+							break;
+						}
+						case PERCENTAGE:
+						{
+							if (rel->dirtyWidth)
+								unresolved = true;
+							else
+							{
+								x = rel->x + rel->actualWidth - (((current->right / 100.0f) * rel->actualWidth) + current->actualWidth + rel->bTr);
+								shift = -current->mr;
+							}
+							break;
+						}
 						}
 					}
 
@@ -4196,6 +4269,17 @@ void HTMLParser::ParseStyling(const char* style, HTMLElement* current)
 
 				current->left = Strings::StringToUint(hValue);
 				current->leftSet = true;
+				current->leftScaling = PX;
+				free(hValue);
+			}
+			else if (Strings::Contains((char*)kvp->items[1], "%"))
+			{
+				char* hValue = Strings::Replace((char*)kvp->items[1], "%", "");
+				Strings::FreeAndAssign(&hValue, Strings::Trim(hValue));
+
+				current->left = Strings::StringToUint(hValue);
+				current->leftSet = true;
+				current->leftScaling = PERCENTAGE;
 				free(hValue);
 			}
 		}
@@ -4208,6 +4292,17 @@ void HTMLParser::ParseStyling(const char* style, HTMLElement* current)
 
 				current->top = Strings::StringToUint(hValue);
 				current->topSet = true;
+				current->topScaling = PX;
+				free(hValue);
+			}
+			else if (Strings::Contains((char*)kvp->items[1], "%"))
+			{
+				char* hValue = Strings::Replace((char*)kvp->items[1], "%", "");
+				Strings::FreeAndAssign(&hValue, Strings::Trim(hValue));
+
+				current->top = Strings::StringToUint(hValue);
+				current->topSet = true;
+				current->topScaling = PERCENTAGE;
 				free(hValue);
 			}
 		}
@@ -4220,6 +4315,17 @@ void HTMLParser::ParseStyling(const char* style, HTMLElement* current)
 
 				current->right = Strings::StringToUint(hValue);
 				current->rightSet = true;
+				current->rightScaling = PX;
+				free(hValue);
+			}
+			else if (Strings::Contains((char*)kvp->items[1], "%"))
+			{
+				char* hValue = Strings::Replace((char*)kvp->items[1], "%", "");
+				Strings::FreeAndAssign(&hValue, Strings::Trim(hValue));
+
+				current->right = Strings::StringToUint(hValue);
+				current->rightSet = true;
+				current->rightScaling = PERCENTAGE;
 				free(hValue);
 			}
 		}
@@ -4232,6 +4338,17 @@ void HTMLParser::ParseStyling(const char* style, HTMLElement* current)
 
 				current->bottom = Strings::StringToUint(hValue);
 				current->bottomSet = true;
+				current->bottomScaling = PX;
+				free(hValue);
+			}
+			else if (Strings::Contains((char*)kvp->items[1], "%"))
+			{
+				char* hValue = Strings::Replace((char*)kvp->items[1], "%", "");
+				Strings::FreeAndAssign(&hValue, Strings::Trim(hValue));
+
+				current->bottom = Strings::StringToUint(hValue);
+				current->bottomSet = true;
+				current->bottomScaling = PERCENTAGE;
 				free(hValue);
 			}
 		}

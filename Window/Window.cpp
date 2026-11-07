@@ -75,7 +75,20 @@ LRESULT CALLBACK Window::StdWindowProcedure(HWND hwnd, UINT msg, WPARAM wParam, 
 		{
 			if (window->centerMouse)
 			{
-				ShowCursor(FALSE);
+				if (window->cursorLastShowed)
+				{
+					window->cursorLastShowed = !window->cursorLastShowed;
+					ShowCursor(FALSE);
+				}
+			}
+			else
+			{
+				if (!window->cursorLastShowed)
+				{
+					window->cursorLastShowed = !window->cursorLastShowed;
+					ShowCursor(TRUE);
+					SetCursor(LoadCursor(NULL, IDC_ARROW));
+				}
 			}
 			return 1;
 		}

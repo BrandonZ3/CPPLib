@@ -194,12 +194,16 @@ public:
 	HTMLElementPosition position = POS_STATIC;
 	bool leftSet = false;
 	int left = 0;
+	HTMLScaling leftScaling = PX;
 	bool topSet = false;
 	int top = 0;
+	HTMLScaling topScaling = PX;
 	bool rightSet = false;
 	int right = 0;
+	HTMLScaling rightScaling = PX;
 	bool bottomSet = false;
 	int bottom = 0;
+	HTMLScaling bottomScaling = PX;
 	float x;
 	float y;
 	float actualWidth;

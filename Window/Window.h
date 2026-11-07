@@ -25,6 +25,7 @@ private:
 
 public:
 	bool centerMouse = false;
+	bool cursorLastShowed = false;
 	Mouse mouse;
 	Keyboard keyboard;
 	DBuffer* typing = new DBuffer();;
