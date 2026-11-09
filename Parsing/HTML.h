@@ -1,6 +1,7 @@
 #pragma once 
 #include <vector>
 
+#include "../IO/Files.h"
 #include "../Containers/PointerList.h"
 #include "../Containers/KeyPointerPair.h"
 #include "../Parsing/JSON.h"
@@ -14,6 +15,7 @@ enum HTMLElementType
 	INP,
 	IMG,
 	P,
+	LINK,
 	CUSTOM
 };
 
@@ -92,6 +94,7 @@ class HTMLElement
 public:
 
 	PointerList* attributes = new PointerList();
+	PointerList* styleSheets = new PointerList();
 	std::vector<HTMLElement*> children;
 	HTMLElement* parent;
 	HTMLElementType type;
@@ -255,6 +258,7 @@ public:
 	int GetChildIndex(HTMLElement* child);
 	HTMLElement(HTMLElementType type);
 	void CopyFlatDetailsToElement(HTMLElement* element);
+	void AddStyleSheet(HTMLElement* element);
 	~HTMLElement();
 
 	static float GetElementMinContentWidth(HTMLElement* element);

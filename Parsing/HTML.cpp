@@ -141,6 +141,34 @@ void HTMLElement::CopyFlatDetailsToElement(HTMLElement* element)
 
 }
 
+void HTMLElement::AddStyleSheet(HTMLElement* element)
+{
+	KeyPointerPair* rel = KeyPointerPair::GetKeyValuePointer(element->attributes, "rel");
+	KeyPointerPair* href = KeyPointerPair::GetKeyValuePointer(element->attributes, "href");
+
+	if (rel != NULL && href != NULL && Files::FileExists((char*)href->pointer))
+	{
+		DBuffer* file = Files::ReadFile((char*)href->pointer);
+		file->Add((uint8_t)0);
+
+		char* fileString = (char*)file->DataPointer(0);
+		uint64_t size = Strings::Length(fileString);
+
+		bool inStyle = false;
+		bool inKey = false;
+
+		for (int i = 0; i < size; i++)
+		{
+			if (fileString[i] != ' ' && fileString[i] != '\t' && fileString[i] != '\r' && fileString[i] != '\n')
+			{
+
+			}
+		}
+
+		delete file;
+	}
+}
+
 int HTMLElement::GetChildIndex(HTMLElement* child)
 {
 	for (int i = 0; i < this->children.size(); i++)
@@ -178,6 +206,25 @@ HTMLElement::~HTMLElement()
 	}
 
 	delete attributes; 
+
+	for (int i = 0; i < styleSheets->count; i++)
+	{
+		KeyPointerPair* nameToStyleSheet = (KeyPointerPair*)styleSheets->items[i];
+		free(nameToStyleSheet->key);
+
+		PointerList* rules = (PointerList*)nameToStyleSheet->pointer;
+		for (int x = 0; x < rules->count; x++)
+		{
+			KeyPointerPair* styleRule = (KeyPointerPair*)rules->items[i];
+			free(styleRule->key);
+			free(styleRule->pointer);
+			delete styleRule;
+		}
+		delete rules;
+
+		delete nameToStyleSheet;
+	}
+	delete styleSheets;
 
 	if (this->text != NULL)
 	{
@@ -3372,6 +3419,10 @@ HTMLElement* HTMLParser::Parse(const char* document)
 			{
 				newH = new HTMLElement(P);
 			}
+			else if (Strings::CompareCaseInsensitive(currentTag, "link"))
+			{
+				newH = new HTMLElement(LINK);
+			}
 			else
 			{
 				newH = new HTMLElement(CUSTOM);
@@ -3381,8 +3432,13 @@ HTMLElement* HTMLParser::Parse(const char* document)
 			if (newH != NULL)
 			{
 				newH->parent = current;
-				current->children.push_back(newH);
-				current = current->children.at(current->children.size() - 1);
+				if (newH->type != LINK)
+				{
+					current->children.push_back(newH);
+					current = current->children.at(current->children.size() - 1);
+				}
+				else
+					current = newH;
 			}
 
 			if (document[i] == ' ')
@@ -3488,12 +3544,28 @@ HTMLElement* HTMLParser::Parse(const char* document)
 		{
 			inTag = false;
 
-			if (Strings::CompareCaseInsensitive(currentTag, "input") || Strings::CompareCaseInsensitive(currentTag, "img"))
+			if (Strings::CompareCaseInsensitive(currentTag, "input") || Strings::CompareCaseInsensitive(currentTag, "img") || Strings::CompareCaseInsensitive(currentTag, "link"))
 			{
+				HTMLElement* link = NULL;
+				if (current->type == LINK)
+				{
+					link = current;
+					HTMLElement* par = current->parent;
+					while (par->parent != NULL)
+					{
+						par = par->parent;
+					}
+
+					par->AddStyleSheet(link);
+				}
+
 				if (current->parent != NULL)
 				{
 					current = current->parent;
 				}
+
+				if (link != NULL)
+					delete link;
 			}
 
 			if (Strings::CompareCaseInsensitive(currentTag, "p"))
