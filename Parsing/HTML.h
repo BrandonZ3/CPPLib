@@ -315,6 +315,7 @@ class HTMLParser
 public:
 	static HTMLElement* Parse(const char* document);
 	static void ParseStyling(const char* style, HTMLElement* element);
+	static void ParseClassStyling(HTMLElement* element, char* classAttributeValue);
 	static void ResolveHTML(HTMLElement* element, JSONElement* variables);
 	static void ResolveDynamicHTML(HTMLElement* element, JSONElement* variables, PointerList* components);
 	static void HTMLReplaceStyleAndText(HTMLElement* reference, HTMLElement* output);

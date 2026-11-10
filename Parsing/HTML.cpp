@@ -155,16 +155,64 @@ void HTMLElement::AddStyleSheet(HTMLElement* element)
 		uint64_t size = Strings::Length(fileString);
 
 		bool inStyle = false;
-		bool inKey = false;
+		bool justExitedStyle = false;
+		bool inKey = true;
+		DBuffer key;
+		DBuffer style;
+
+		PointerList* styleItems = new PointerList();
+		KeyPointerPair* currentStyleItem = NULL;
 
 		for (int i = 0; i < size; i++)
 		{
-			if (fileString[i] != ' ' && fileString[i] != '\t' && fileString[i] != '\r' && fileString[i] != '\n')
-			{
+			if(inKey && fileString[i] != '.') // For Now no .'s so it will only be class names....
+				key.Add((uint8_t)fileString[i]);
 
+			if (inStyle && fileString[i] != '\t' && fileString[i] != '\r' && fileString[i] != '\n')
+			{
+				if (fileString[i] == ';' && !justExitedStyle)
+					justExitedStyle = true;
+				if(!(justExitedStyle && fileString[i] == ' '))
+					style.Add((uint8_t)fileString[i]);
+				if (justExitedStyle && fileString[i] != ' ' && fileString[i] != ';')
+					justExitedStyle = false;
+			}
+
+			if (fileString[i] == '{')
+			{
+				inKey = false;
+				inStyle = true;
+				key.Remove(key.count - 1);
+				key.Add((uint8_t)0);
+				char* Nkey = Strings::TrimWhiteSpace((const char*)key.DataPointer(0));
+				currentStyleItem = new KeyPointerPair(Nkey, NULL);
+				key.Clear();
+			}
+			else if (fileString[i] == '}')
+			{
+				if (currentStyleItem != NULL)
+				{
+					inKey = true;
+					inStyle = false;
+					style.Remove(style.count - 1);
+					style.Add((uint8_t)0);
+					char* Nstyle = Strings::TrimWhiteSpace((const char*)style.DataPointer(0));
+					currentStyleItem->pointer = Nstyle;
+					style.Clear();
+					styleItems->AddPointer(currentStyleItem);
+					currentStyleItem = NULL;
+				}
 			}
 		}
 
+		if (currentStyleItem != NULL)
+		{
+			free(currentStyleItem->key);
+			delete currentStyleItem;
+		}
+
+		KeyPointerPair* styleSheet = new KeyPointerPair(Strings::Clone((char*)href->pointer), styleItems);
+		this->styleSheets->AddPointer(styleSheet);
 		delete file;
 	}
 }
@@ -210,18 +258,18 @@ HTMLElement::~HTMLElement()
 	for (int i = 0; i < styleSheets->count; i++)
 	{
 		KeyPointerPair* nameToStyleSheet = (KeyPointerPair*)styleSheets->items[i];
-		free(nameToStyleSheet->key);
 
 		PointerList* rules = (PointerList*)nameToStyleSheet->pointer;
 		for (int x = 0; x < rules->count; x++)
 		{
-			KeyPointerPair* styleRule = (KeyPointerPair*)rules->items[i];
+			KeyPointerPair* styleRule = (KeyPointerPair*)rules->items[x];
 			free(styleRule->key);
 			free(styleRule->pointer);
 			delete styleRule;
 		}
 		delete rules;
 
+		free(nameToStyleSheet->key);
 		delete nameToStyleSheet;
 	}
 	delete styleSheets;
@@ -3489,6 +3537,10 @@ HTMLElement* HTMLParser::Parse(const char* document)
 
 			current->attributes->AddPointer(new KeyPointerPair(currentAttribute, currentAttributeValue));
 
+			if (Strings::CompareCaseInsensitive(currentAttribute, "class"))
+			{
+				ParseClassStyling(current, currentAttributeValue);
+			}
 
 			if (Strings::CompareCaseInsensitive(currentAttribute, "style"))
 			{
@@ -4549,6 +4601,37 @@ void HTMLParser::ParseStyling(const char* style, HTMLElement* current)
 	delete styling;
 }
 
+void HTMLParser::ParseClassStyling(HTMLElement* element, char* classAttributeValue)
+{
+	PointerList* classNames = PointerList::SplitString(classAttributeValue, " ");
+
+	HTMLElement* root = element;
+
+	while (root->parent != NULL)
+		root = root->parent;
+
+	for (int sSI = 0; sSI < root->styleSheets->count; sSI++)
+	{
+		KeyPointerPair* sSN = (KeyPointerPair*)root->styleSheets->items[sSI];
+
+		PointerList* styleItems = (PointerList*)sSN->pointer;
+
+		for (int sII = 0; sII < styleItems->count; sII++)
+		{
+			KeyPointerPair* styleItem = (KeyPointerPair*)styleItems->items[sII];
+			for (int cNI = 0; cNI < classNames->count; cNI++)
+			{
+				if (Strings::Compare((char*)styleItem->key, (char*)classNames->items[cNI]))
+				{
+					ParseStyling((char*)styleItem->pointer, element);
+				}
+			}
+		}
+
+	}
+	classNames->FreeEverything();
+	delete classNames;
+}
 
 //#define BGRAPH_DEBUG 1
 

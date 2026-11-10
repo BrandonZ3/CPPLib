@@ -619,6 +619,56 @@ char* Strings::Trim(const char* string)
 	}
 }
 
+char* Strings::TrimWhiteSpace(const char* string)
+{
+	char* result = NULL;
+	int stringLength = strlen(string);
+
+	int start = -1;
+	int end = -1;
+
+	for (int i = 0; i < stringLength; i++)
+	{
+		if (start == -1 && string[i] != ' ' && string[i] != '\r' && string[i] != '\n' && string[i] != '\t')
+		{
+			start = i;
+			break;
+		}
+	}
+
+	for (int i = stringLength - 1; i >= 0; i--)
+	{
+		if (end == -1 && string[i] != ' ' && string[i] != '\r' && string[i] != '\n' && string[i] != '\t')
+		{
+			end = i;
+			break;
+		}
+	}
+
+	if (start != -1 && end != -1)
+	{
+		int length = end - start;
+		result = (char*)malloc(length + 2);
+
+		int pos = 0;
+
+		for (int i = start; i <= end; i++)
+		{
+			result[pos] = string[i];
+			pos++;
+		}
+
+		result[length + 1] = 0;
+		return result;
+	}
+	else if (start == end && start == -1)
+	{
+		result = (char*)malloc(1);
+		result[0] = 0;
+		return result;
+	}
+}
+
 char* Strings::ToLowerString(const char* string)
 {
 	int stringLength = strlen(string);

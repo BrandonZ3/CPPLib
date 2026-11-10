@@ -51,6 +51,8 @@ public:
 
 	static char* Trim(const char* string); 
 
+	static char* TrimWhiteSpace(const char* string);
+
 	static char* ToLowerString(const char* string);
 
 	static void Free(char* string);
