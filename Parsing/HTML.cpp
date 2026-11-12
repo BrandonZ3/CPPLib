@@ -5105,6 +5105,20 @@ HTMLElement* HTMLParser::RecreateElement(HTMLElement* ref, HTMLElement* parent)
 	HTMLElement* result = new HTMLElement(ref->type);
 	ref->CopyFlatDetailsToElement(result);
 
+	for (int i = 0; i < result->attributes->count; i++)
+	{
+		KeyPointerPair* kPP = (KeyPointerPair*)result->attributes->items[i];
+		if (Strings::CompareCaseInsensitive((char*)kPP->key, "class"))
+		{
+			ParseClassStyling(result, (char*)kPP->pointer);
+		}
+
+		if (Strings::CompareCaseInsensitive((char*)kPP->key, "style"))
+		{
+			ParseStyling((char*)kPP->pointer, result);
+		}
+	}
+
 	if (parent == NULL)
 	{
 
@@ -5141,14 +5155,18 @@ void HTMLParser::FindAndReplaceComponentsVariables(HTMLElement* container, HTMLE
 
 			if (!Strings::Compare(replaceRef->key, "style"))
 			{
-				if (!textDone && doText && Strings::Contains((char*)pair->pointer, replaceRef->key))
+				if (!textDone && doText /* && Strings::Contains((char*)pair->pointer, replaceRef->key)*/)
 				{
+					Strings::FreeAndAssign((char**)&element->text, Strings::Replace(element->text, "{", ""));
+					Strings::FreeAndAssign((char**)&element->text, Strings::Replace(element->text, "}", ""));
 					Strings::FreeAndAssign((char**)&element->text, Strings::Replace(element->text, replaceRef->key, (char*)replaceRef->pointer));
 					textDone = true;
 				}
 
 				if (Strings::Contains((char*)pair->pointer, replaceRef->key))
 				{
+					Strings::FreeAndAssign((char**)&pair->pointer, Strings::Replace((char*)pair->pointer, "{", ""));
+					Strings::FreeAndAssign((char**)&pair->pointer, Strings::Replace((char*)pair->pointer, "}", ""));
 					Strings::FreeAndAssign((char**)&pair->pointer, Strings::Replace((char*)pair->pointer, replaceRef->key, (char*)replaceRef->pointer));
 				}
 			}
