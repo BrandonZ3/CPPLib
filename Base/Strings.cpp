@@ -253,6 +253,42 @@ char* Strings::ReplaceChar(const char* string, char oldchar, char newchar)
 	return newString;
 }
 
+bool Strings::IsInteger(const char* string)
+{
+	size_t stringLength = strlen(string);
+
+	for (size_t i = 0; i < stringLength; i++)
+	{
+		if (i == 0 && string[i] == '-' && stringLength > 1)
+			continue;
+
+		if (string[i] > 0x39 || string[i] < 0x30)
+			return false;
+	}
+
+	return true;
+}
+
+
+bool Strings::IsFloat(const char* string)
+{
+	size_t stringLength = strlen(string);
+
+	for (size_t i = 0; i < stringLength; i++)
+	{
+		if (i == 0 && string[i] == '-' && stringLength > 1)
+			continue;
+		
+		if (i == stringLength - 1 && string[i] == '.')
+			return false;
+
+		if ((string[i] > 0x39 || string[i] < 0x30) && string[i] != '.')
+			return false;
+	}
+
+	return true;
+}
+
 bool Strings::IsNumeric(const char* string) 
 {
 	size_t stringLength = strlen(string);

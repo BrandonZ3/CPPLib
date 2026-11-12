@@ -31,6 +31,10 @@ public:
 
 	static char* ReplaceChar(const char* string, char oldchar, char newchar); 
 
+	static bool IsInteger(const char* string);
+
+	static bool IsFloat(const char* string);
+
 	static bool IsNumeric(const char* string); 
 
 	static char* Insert(const char* string, const char* content, uint64_t index);
