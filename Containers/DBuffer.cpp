@@ -266,13 +266,14 @@ void DBuffer::WriteUIntegerAsStringToDBuffer(uint64_t value)
 
 	int8_t i = 0;
 
-	while (value != 0)
+	
+	do 
 	{
 		uint8_t current = value % 10;
 		value /= 10;
 		chars[i] = current + 0x30;
 		i++;
-	}
+	} while (value != 0);
 	i--;
 	for (; i >= 0; i--)
 		this->Add(chars[i]);
@@ -284,14 +285,17 @@ uint64_t DBuffer::WriteUIntegerAsStringToDBuffer(uint64_t value, uint64_t offset
 
 	int8_t i = 0;
 
-	while (value != 0)
+	
+	do 
 	{
 		uint8_t current = value % 10;
 		value /= 10;
 		chars[i] = current + 0x30;
 		i++;
-	}
+	} while (value != 0);
+
 	i--;
+
 	for (; i >= 0; i--)
 	{
 		this->Set(chars[i], offset);
