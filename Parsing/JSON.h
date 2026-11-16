@@ -33,6 +33,7 @@ public:
 	static JSONElement* CreateRenamedReference(const char* newName, JSONElement* element);
 	static JSONElement* ConvertBlankToRenamedReference(JSONElement* convertee, const char* newName, JSONElement* element);
 	static void CreateRootPathFromReference(JSONElement* element, char** ref);
+	static void CreateJSON(JSONElement* element, DBuffer* output, uint8_t indent = 0);
 };
 
 class JSON

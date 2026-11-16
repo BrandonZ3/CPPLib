@@ -223,6 +223,96 @@ void JSONElement::CreateRootPathFromReference(JSONElement* element, char** ref)
 	}
 }
 
+#define DBUFUCAST (uint8_t)
+#define CJ_ADD_TABS(indents) \
+for (int i = 0; i < (indents); i++) \
+{ \
+	output->Add(DBUFUCAST'\t'); \
+}
+
+#define CJ_ADD_KEY(childElement) \
+output->Add(DBUFUCAST'"'); \
+output->Add((unsigned char*)childElement->name, Strings::Length(childElement->name)); \
+output->Add(DBUFUCAST'"'); \
+output->Add(DBUFUCAST' '); \
+output->Add(DBUFUCAST':'); \
+output->Add(DBUFUCAST' ');
+
+
+void JSONElement::CreateJSON(JSONElement* element, DBuffer* output, uint8_t indent)
+{
+	if (element != NULL)
+	{
+		switch (element->type)
+		{
+		case JSONElementType::OBJECT:
+		{
+			output->Add(DBUFUCAST'{');
+			output->Add(DBUFUCAST'\r');
+			output->Add(DBUFUCAST'\n');
+
+			for (int i = 0; i < element->children->count; i++)
+			{
+				CJ_ADD_TABS(indent + 1)
+				JSONElement* chld = (JSONElement*)element->children->items[i];
+				CJ_ADD_KEY(chld)
+				if(chld->type == OBJECT || chld->type == ARRAY)
+				{
+					output->Add(DBUFUCAST'\r');
+					output->Add(DBUFUCAST'\n');
+					CJ_ADD_TABS(indent + 1)
+				}
+				JSONElement::CreateJSON(chld, output, indent + 1);
+				if (i < element->children->count - 1)
+				{
+					output->Add(DBUFUCAST',');
+				}
+				output->Add(DBUFUCAST'\r');
+				output->Add(DBUFUCAST'\n');
+			}
+
+			CJ_ADD_TABS(indent)
+			output->Add(DBUFUCAST'}');
+			break;
+		}
+		case JSONElementType::ARRAY:
+		{
+			output->Add(DBUFUCAST'[');
+			output->Add(DBUFUCAST'\r');
+			output->Add(DBUFUCAST'\n');
+			for (int i = 0; i < element->children->count; i++)
+			{
+				CJ_ADD_TABS(indent + 1)
+				JSONElement* chld = (JSONElement*)element->children->items[i];
+				JSONElement::CreateJSON(chld, output, indent + 1);
+				if (i < element->children->count - 1)
+				{
+					output->Add(DBUFUCAST',');
+				}
+				output->Add(DBUFUCAST'\r');
+				output->Add(DBUFUCAST'\n');
+			}
+			CJ_ADD_TABS(indent)
+			output->Add(DBUFUCAST']');
+			break;
+		}
+		case JSONElementType::KVP:
+		{
+			if (!Strings::IsInteger(element->value) && !Strings::IsFloat(element->value) && !Strings::Compare(element->value, "true") && !Strings::Compare(element->value, "false"))
+			{
+				output->Add(DBUFUCAST'"');
+				output->Add((unsigned char*)element->value, Strings::Length(element->value));
+				output->Add(DBUFUCAST'"');
+			}
+			else
+			{
+				output->Add((unsigned char*)element->value, Strings::Length(element->value));
+			}
+			break;
+		}
+		}
+	}
+}
 
 //JSON
 PointerList* JSON::GetKeys(const char* json)
